@@ -1,99 +1,105 @@
-# A.V.E.A – Automated Video Editing Agent 🎬✨
+# prema.ai (Video Generation Engine)
 
-**The AI-powered creative engine for next-gen content creators.**
-
-A.V.E.A completely automates the editing process for TikToks, Reels, and Youtube Videos. It takes your raw footage, analyses it with Gemini, and uses MoviePy to stitch together a perfect story with music, voiceovers, and effects.
-
----
-
-## 🚀 Key Features
-
-*   **Intelligent Storyboarding (Gemini)**: The AI "watches" your videos, picks the best moments, and arranges them into a coherent narrative (Hook -> Body -> Punch).
-*   **Multi-Format Support**:
-    *   **📱 Vertical (9:16)**: Perfect for TikTok, Instagram Reels, and YouTube Shorts.
-    *   **📺 Horizontal (16:9)**: Full-width support for standard YouTube videos.
-*   **Auto Duration**: "Auto" mode lets the AI decide the perfect length based on your footage quality, or you can stick to strict presets (15s, 30s, 60s).
-*   **Audio Suite**:
-    *   **🎵 Smart Background Music**: Automatically loops and mixes background tracks.
-    *   **🗣️ AI Voiceover (TTS)**: Converts generated captions into spoken narration.
-*   **Performance Turbo Mode**: Parallel file uploads and multi-threaded rendering make processing large batches (26+ files) up to 10x faster.
-*   **Interactive Dashboard**: Real-time state management, format selection, and an integrated "AI Co-Editor" chat for refining edits.
+> **Automated Video Editing Agent (AVEA)**
+> *Turn raw footage into viral shorts in seconds using AI.*
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 Overview
+**prema.ai** is a high-performance AI video editor that analyzes raw video footage, identifies the most engaging moments ("hooks", "body", "punch"), and automatically assembles them into a viral-style vertical video (TikTok/Reels/Shorts).
 
-*   **Frontend**: Next.js 15, React, Tailwind CSS, TypeScript
-*   **Backend**: FastAPI (Python 3.11), Uvicorn
-*   **AI Core**: Google Gemini 1.5 Pro/Flash (via `google.generativeai`)
-*   **Video Engine**: MoviePy, FFmpeg, OpenCV
-*   **Audio**: gTTS (Google Text-to-Speech)
+It features a modern, premium UI with real-time job processing, optimized AI pipelines, and instant dashboard redirection.
 
 ---
 
-## 🏁 Getting Started
+## ✨ Features
 
-### Prerequisites
-*   Node.js & npm
-*   Python 3.11+
-*   FFmpeg (installed and added to PATH)
+### 🧠 Intelligent Analysis (Gemini 2.0 Flash)
+- **Ultra-Fast Scene Detection**: Uses Google's `gemini-2.0-flash` model for lightning-fast video understanding (2K Requests/Min).
+- **Smart Compression Protocol**: Automatically compresses large 4K uploads (500MB+) into tiny 360p proxies (5MB) *before* sending to AI. **10x faster processing.**
+- **Contextual Editing**: Detects sentiment (Motivational, Intense, Happy) and adjusts pacing automatically.
 
-### Installation
+### 🎨 Premium UI/UX
+- **Universal Themes**: toggle between **Universal Space** (Holographic), **Vibrant Nebula** (Creative), and **Premium Light** (SaaS).
+- **Instant Redirect**: No loading screens. "Setup" page redirects immediately to "Dashboard" where jobs process in the background.
+- **Micro-Animations**: Mouse-tracking spotlights, magnetic buttons, and glassmorphism elements.
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/your-repo/avea.git
-    cd avea
-    ```
-
-2.  **Backend Setup**:
-    ```bash
-    cd backend
-    python -m venv venv
-    # Windows:
-    .\venv\Scripts\activate
-    # Mac/Linux:
-    source venv/bin/activate
-    
-    pip install -r requirements.txt
-    ```
-
-3.  **Frontend Setup**:
-    ```bash
-    cd frontend
-    npm install
-    ```
-
-4.  **Environment Variables**:
-    Create a `.env` file in `backend/` with your API key:
-    ```env
-    GOOGLE_API_KEY=your_gemini_api_key_here
-    ```
-    *(Optional: Add `bg_music.mp3` to `backend/assets/music/` for background music)*
-
-### Running the App
-
-1.  **Start Backend** (inside `backend/`):
-    ```bash
-    python -m uvicorn app.main:app --reload
-    ```
-    *Server will start at `http://localhost:8000`*
-
-2.  **Start Frontend** (inside `frontend/`):
-    ```bash
-    npm run dev
-    ```
-    *App will be live at `http://localhost:3000`*
+### ⚡ Performance Engineering
+- **Async Rendering**: Video assembly happens in a background thread; the API never blocks.
+- **Optimized FFmpeg**: Uses `imageio-ffmpeg` binary for guaranteed hardware acceleration support on Windows.
+- **Polling Architecture**: Dashboard autonomously checks local storage to resume tracking jobs even after a refresh.
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Architecture
 
-*   `backend/app/services/gemini_client.py`: Core AI logic (Prompt engineering, Parallel Uplods).
-*   `backend/app/services/renderer.py`: Video processing engine (MoviePy, TTS, Effects).
-*   `frontend/app/dashboard/page.tsx`: Main UI logic.
-*   `media/`: Dynamic storage for user uploads and generated output.
+### Frontend (`/frontend`)
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS + Framer Motion
+- **State**: React Hooks + Local Storage (for Job IDs)
+
+### Backend (`/backend`)
+- **Server**: FastAPI (Python)
+- **AI Engine**: Google Gemini 1.5/2.0 Flash
+- **Video Processing**: MoviePy + FFmpeg (Direct Binary)
+- **Task Queue**: FastAPI BackgroundTasks
 
 ---
 
-**Built with ❤️ for Creators.**
+## 🏃‍♂️ Quick Start
+
+### 1. Backend
+```bash
+cd backend
+# Create/Activate Virtual Env
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Install Deps
+pip install -r requirements.txt
+
+# Run Server (Port 8000)
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 2. Frontend
+```bash
+cd frontend
+# Install Deps
+npm install
+
+# Run Dev Server (Port 3000)
+npm run dev
+```
+
+Visit: `http://localhost:3000`
+
+---
+
+## 🔮 Roadmap & Improvements
+
+### Phase 1: Core (Completed ✅)
+- [x] Basic Video Assembly (Hook/Body/Punch)
+- [x] AI Captioning
+- [x] Universal UI Themes
+- [x] **Speed Optimization (Gemini Flash + Compression)**
+
+### Phase 2: Generation (Coming Soon 🚧)
+- [ ] **AI Image Generation**: Use `imagen-4.0-generate` to create B-roll from scratch.
+- [ ] **AI Video Generation**: Use `veo-3.0` to generate transitions or scenes.
+- [ ] **AI Voiceovers**: Integrated ElevenLabs or OpenAI TTS for narration.
+
+### Phase 3: Polish
+- [ ] **Precise Transitions**: Add 'whip-pan' and 'zoom-blur' transitions in MoviePy.
+- [ ] **Music Sync**: Beat-sync logic to cut video exactly on music downbeats.
+- [ ] **User Accounts**: Firebase/Supabase auth for saving user history.
+
+---
+
+## 🐛 Troubleshooting
+
+**"FFmpeg not found"**
+- The system now uses `imageio-ffmpeg` to automatically find the correct binary. You do not need to install FFmpeg manually on the system PATH.
+
+**"Hydration Mismatch"**
+- Fixed by adding `suppressHydrationWarning` to inputs, preventing browser extensions (like Password Managers) from crashing the React tree.

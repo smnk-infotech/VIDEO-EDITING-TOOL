@@ -3,6 +3,7 @@ import json
 import time
 import asyncio
 import concurrent.futures
+import subprocess
 from typing import List, Dict, Any
 import google.generativeai as genai
 from moviepy.editor import VideoFileClip
@@ -10,14 +11,21 @@ from moviepy.editor import VideoFileClip
 # Note: In production, ensure moviepy doesn't crash if ffmpeg is missing.
 # We wrap duration checks in try/except.
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOG_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
+if GOOG_API_KEY:
+    genai.configure(api_key=GOOG_API_KEY)
 else:
     print("[A.V.E.A] WARNING: GOOGLE_API_KEY is not set.")
 
-MODEL_NAME = "gemini-2.5-flash"
+# AVAILABLE MODELS (User provided list):
+# - Speed/Analysis: gemini-2.0-flash-lite, gemini-2.0-flash, gemini-2.5-flash
+# - Reasoning/Chat: gemini-2.5-pro, gemini-3-pro
+# - Media: veo-3.0-generate, imagen-4.0-generate
+
+# Selected for Video Analysis (Speed + VQA capabilities):
+MODEL_NAME = "gemini-2.0-flash"
+
 
 
 def _get_media_info(path: str) -> str:
@@ -108,21 +116,67 @@ def _create_fallback_storyboard(media_paths: List[str], style: str, target_durat
     }
 
 
+def _compress_video_for_analysis(input_path: str) -> str:
+    """
+    Compresses video to 360p low bitrate for faster global upload & analysis.
+    Returns path to compressed temp file.
+    """
+    if not input_path.lower().endswith((".mp4", ".mov", ".avi", ".mkv")):
+        return input_path # Skip images
+        
+    try:
+        temp_dir = os.path.dirname(input_path)
+        filename = os.path.basename(input_path)
+        output_path = os.path.join(temp_dir, f"temp_lowres_{filename}")
+        
+        # Check if already exists from previous run
+        if os.path.exists(output_path):
+            return output_path
+
+        # FFmpeg command: Scale to 360p height, max 1000k bitrate, ultra fast preset
+        # This reduces a 100MB file to ~5MB in seconds.
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-i", input_path,
+            "-vf", "scale=-2:360", # Maintain aspect ratio, height 360
+            "-b:v", "700k", # Low bitrate
+            "-preset", "ultrafast",
+            "-c:a", "copy", # Copy audio (fast)
+            output_path
+        ]
+        
+        # Suppress output unless error
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        print(f"[Compress] Reduced {filename} for analysis -> {output_path}")
+        return output_path
+    
+    except Exception as e:
+        print(f"[Compress] Failed to compress {input_path}, using original. Error: {e}")
+        return input_path
+
+
 def _upload_single_file(path: str):
     """Blocking upload function to be run in a thread."""
     try:
         if not path.lower().endswith(('.mp4', '.mov', '.avi', '.jpg', '.jpeg', '.png', '.webp')):
             return None
+        
+        # OPTIMIZATION: Compress before upload
+        upload_path = _compress_video_for_analysis(path)
             
-        print(f"Starting upload: {os.path.basename(path)}...")
-        file_ref = genai.upload_file(path=path)
+        print(f"Starting upload: {os.path.basename(upload_path)}...")
+        file_ref = genai.upload_file(path=upload_path)
         
         # Wait for processing
         while file_ref.state.name == "PROCESSING":
             time.sleep(1) # Check more frequently
             file_ref = genai.get_file(file_ref.name)
             
-        print(f"Ready: {os.path.basename(path)}")
+        print(f"Ready: {os.path.basename(upload_path)}")
         return file_ref
     except Exception as e:
         print(f"Upload failed for {path}: {e}")
@@ -138,7 +192,7 @@ async def analyze_media_with_gemini(
     """
     Calls Gemini using parallel file uploads.
     """
-    if not GOOGLE_API_KEY:
+    if not GOOG_API_KEY:
         return _create_fallback_storyboard(media_paths, style, target_duration_seconds)
 
     # 1. Parallel Uploads via ThreadPool
@@ -174,45 +228,42 @@ async def analyze_media_with_gemini(
         timing_rule = "- **FLEXIBLE TIMING**: End the video when the story is complete. No strict second limit."
 
     prompt_text = f"""
-You are an expert video editor.
+You are an expert video editor and creative director.
 I have provided {len(uploaded_files)} media files above.
 
-Task: Create a viral {style} style video.
-{duration_instruction}
-Format: {aspect_ratio} ({'Horizontal/YouTube' if aspect_ratio == '16:9' else 'Vertical/Reel'}).
+Task: Create a viral {style} style video (Target: {target_duration_seconds}s).
+Format: {aspect_ratio}.
 
 CRITICAL INSTRUCTIONS:
-1. **Visual Reasoning**: You can SEE the video. Identify the most interesting moments (action, emotion, movement).
-2. **Dynamic Cuts**: Do NOT just use the start. Find the BEST segments.
-3. **Pacing**: Use at least 4-6 different scenes.
-4. **Story**: Start with a visual HOOK, add value in the BODY, end with a PUNCH.
-
-IMPORTANT TIMING RULES:
-{timing_rule}
-- **Timestamps are in SECONDS**. Example: 'start': 5.0, 'end': 8.0 (This is a 3 second clip).
-- **Start Time Reference**: 'start' refers to the timestamp in the SOURCE video.
-- **End Time Reference**: 'end' refers to the timestamp in the SOURCE video.
-- **Do NOT use decimals < 0.1**. Example 0.05 is 50 milliseconds (TOO SHORT). Use 1.5, 2.0, etc.
-- **Minimum Clip Length**: 2.0 seconds. Ensure (end - start) >= 2.0.
+1. **Visual Reasoning**: Identify the most interesting moments (Action, Emotion, Movement).
+2. **Story Arc**: Structure the video: **Hook (0-3s)** -> **Body (Value/Story)** -> **Punch/CTA**.
+3. **B-Roll Logic**: If the user mentions a specific noun (e.g., "Bitcoin", "Ocean", "Future"), you can request B-Roll using 'ai_broll' input_type.
+4. **Pacing**: {style} style usually requires {'fast cuts (1-2s)' if style == 'Fast-Paced' else 'balanced cuts (3-5s)'}.
 
 Output JSON Format (Strict):
 {{
+  "sentiment": "Motivational" | "Sad" | "Happy" | "Intense",
+  "pacing": "Fast" | "Slow" | "Medium",
   "scenes": [
     {{
-      "input_type": "user_clip" | "user_image",
-      "file_path": "original_filename_of_the_clip", 
+      "input_type": "user_clip" | "user_image" | "ai_broll",
+      "file_path": "original_filename" (OR "keyword_for_broll" if input_type is ai_broll),
       "start": 0.0,
-      "end": 3.5, 
-      "duration": 3.5,
+      "end": 3.0,
+      "duration": 3.0,
       "role": "hook" | "body" | "punch",
-      "caption": "Short overlay text",
-      "effect": "slow_zoom_in" | "crossfade" | "none"
+      "caption": "Overlay text",
+      "effect": "slow_zoom_in" | "crossfade" | "none",
+      "b_roll_keyword": "tech city" (Only if input_type is ai_broll)
     }}
   ]
 }}
 
-IMPORTANT: For 'file_path', please look at the file names and match them to the inputs if possible, or just refer to them by order if names are lost.
-The system will map them back. Attempts to match the original filename:
+Example of B-Roll Usage:
+If user says "Imagine a world of AI", you can insert a scene:
+{{ "input_type": "ai_broll", "b_roll_keyword": "futuristic ai robot", "duration": 2.5, "caption": "Imagine AI", ... }}
+
+Mapping attempts:
 {json.dumps([os.path.basename(p) for p in media_paths])}
 """
 

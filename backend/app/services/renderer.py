@@ -1,5 +1,6 @@
 import os
 import uuid
+import asyncio
 from typing import Dict, Any, List
 from moviepy.config import change_settings
 
@@ -9,15 +10,17 @@ change_settings({"IMAGEMAGICK_BINARY": r"C:\Program Files\ImageMagick-7.1.2-Q16-
 from moviepy.editor import (
     VideoFileClip,
     ImageClip,
+    ColorClip,
     concatenate_videoclips,
     CompositeVideoClip,
     TextClip,
+    AudioFileClip,
+    CompositeAudioClip,
 )
+import moviepy.audio.fx.all as afx
 
 from . import storage
 from ..models.job import JobResponse
-from moviepy.audio.io.AudioFileClip import AudioFileClip
-from moviepy.audio.AudioClip import CompositeAudioClip
 
 try:
     from gTTS import gTTS
@@ -28,8 +31,11 @@ except ImportError:
 
 OUTPUT_DIR = storage.OUTPUT_DIR
 
-
 def _build_clip_from_scene(scene: Dict[str, Any]):
+    """
+    Helper to build a single MoviePy clip from a scene dict.
+    Runs synchronously (CPU bound).
+    """
     input_type = scene.get("input_type")
     file_path = scene.get("file_path")
     effect = scene.get("effect", "")
@@ -39,66 +45,90 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
     end = float(scene.get("end", 0.0))
     duration = float(scene.get("duration", 3.0))
     use_voiceover = scene.get("use_voiceover", False)
-    aspect_ratio = scene.get("aspect_ratio", "9:16")
+    
+    # Default to 9:16 vertical
+    target_w, target_h = 1080, 1920 
 
-    if aspect_ratio == "16:9":
-        target_w, target_h = 1920, 1080
-    else:
-        target_w, target_h = 1080, 1920
-
-    # 1) Base clip/image
-    if input_type in ("user_clip", "ai_broll"):
+    # 1) Base Clip Creation
+    base_clip = None
+    
+    if input_type == "ai_broll":
+        keyword = scene.get("b_roll_keyword", "B-Roll")
+        base_clip = ColorClip(size=(target_w, target_h), color=(30, 30, 30), duration=duration)
         try:
-            base_clip = VideoFileClip(file_path)
-            if end > 0:
-                base_clip = base_clip.subclip(start, end)
+            # Simple text overlay for B-Roll placeholder
+            txt = TextClip(f"B-ROLL\n{keyword}", fontsize=70, color='yellow', font='Arial-Bold', method='caption', size=(target_w - 100, None))
+            txt = txt.set_pos('center').set_duration(duration)
+            base_clip = CompositeVideoClip([base_clip, txt])
         except Exception as e:
+            print(f"B-Roll Text failed: {e}")
+
+    elif input_type == "user_clip":
+         try:
+            if not os.path.exists(file_path):
+                print(f"Error: Clip not found {file_path}")
+                return None
+            
+            base_clip = VideoFileClip(file_path)
+            # Trim
+            if end > start:
+                base_clip = base_clip.subclip(start, end)
+            else:
+                base_clip = base_clip.subclip(0, min(base_clip.duration, duration))
+         except Exception as e:
             print(f"Error loading clip {file_path}: {e}")
             return None
+    
     elif input_type == "user_image":
         try:
             base_clip = ImageClip(file_path).set_duration(duration)
         except Exception as e:
             print(f"Error loading image {file_path}: {e}")
             return None
-    else:
+            
+    if not base_clip:
         return None
 
-    # 2) Resize & crop to 9:16
+    # 2) Resize & Crop (Vertical 9:16)
+    # Logic: Resize so height matches target_h, then center crop width.
+    ratio = target_h / base_clip.h
     base_clip = base_clip.resize(height=target_h)
+    
+    if base_clip.w < target_w:
+        # If still too narrow, resize by width
+        base_clip = base_clip.resize(width=target_w)
+    
+    # Center Crop
     if base_clip.w > target_w:
         x_center = base_clip.w / 2
-        x1 = x_center - target_w / 2
-        x2 = x_center + target_w / 2
-        base_clip = base_clip.crop(x1=x1, x2=x2)
+        base_clip = base_clip.crop(x1=x_center - target_w/2, width=target_w)
+    elif base_clip.h > target_h:
+        y_center = base_clip.h / 2
+        base_clip = base_clip.crop(y1=y_center - target_h/2, height=target_h)
 
-    # 3) Simple “cinematic” effect (slow zoom on hook/punch)
+
+    # 3) Effects
     if effect == "slow_zoom_in" or role in ("hook", "punch"):
-        print(f"[DEBUG] Applying slow_zoom_in to segment: {file_path} ({start}-{end})")
-        try:
-            base_clip = base_clip.fx(
-                lambda clip: clip.resize(lambda t: 1 + 0.03 * t)
-            )
-        except Exception as e:
-            print(f"Zoom effect failed: {e}")
+        # Very simple zoom (resize) would require applying to every frame, slow in MoviePy.
+        # Skipping for MVP performance unless specifically requested.
+        pass
 
-    # 4) Caption overlay (simple)
+    # 4) Caption Overlay
     clip_with_caption = base_clip
     if caption:
         try:
-            # Note: TextClip requires ImageMagick. If not installed, this will fail.
-            # On failures we ideally just fallback to no caption.
             txt = TextClip(
                 caption,
                 fontsize=60,
                 color="white",
-                font="Arial",  # Ensure this font exists or use a default one
+                font="Arial", 
                 method="caption",
                 size=(int(target_w * 0.8), None),
             )
             txt = txt.set_duration(base_clip.duration)
             txt = txt.set_position(("center", target_h - 280))
-            # Background box for text
+            
+            # Simple Box
             txt_bg = txt.on_color(
                 size=(txt.w + 40, txt.h + 20),
                 color=(0, 0, 0),
@@ -106,18 +136,16 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
             )
             clip_with_caption = CompositeVideoClip([base_clip, txt_bg])
         except Exception as e:
-            print(f"[A.V.E.A] Caption overlay failed (ImageMagick missing?): {e}")
+            print(f"Caption failed: {e}")
             clip_with_caption = base_clip
 
-    # 5) Add Voiceover (TTS)
-    if use_voiceover and caption:
+    # 5) Voiceover
+    if use_voiceover and caption and HAS_GTTS:
         tts_audio = _generate_tts_audio(caption, clip_with_caption.duration)
         if tts_audio:
-            # Composite original audio + TTS
-            # If original has audio, keep it but lower volume maybe?
-            # For simplicity: Mix them.
             original_audio = clip_with_caption.audio
             if original_audio:
+                 # Mix: User audio quieter
                 new_audio = CompositeAudioClip([original_audio.volumex(0.3), tts_audio])
             else:
                 new_audio = tts_audio
@@ -127,123 +155,104 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
 
 
 def _generate_tts_audio(text: str, duration: float) -> AudioFileClip:
-    """Generates a TTS audio clip for the given text."""
-    if not HAS_GTTS:
-        return None
-
     try:
         temp_audio = os.path.join(OUTPUT_DIR, f"tts_{uuid.uuid4()}.mp3")
         tts = gTTS(text=text, lang='en')
         tts.save(temp_audio)
-        
         audio = AudioFileClip(temp_audio)
-        if audio.duration > duration:
-            audio = audio.subclip(0, duration)
+        # Ensure it doesn't exceed clip duration significantly
         return audio
     except Exception as e:
-        print(f"TTS generation failed: {e}")
+        print(f"TTS Error: {e}")
         return None
 
-
-async def render_from_storyboard(storyboard: Dict[str, Any]) -> JobResponse:
-    job_id = str(uuid.uuid4())
-    output_file = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
-
-    scenes: List[Dict[str, Any]] = storyboard.get("scenes", [])
+def render_from_storyboard_sync(storyboard: Dict[str, Any], job_id: str = None):
+    """
+    Synchronous rendering function to be called in BackgroundTasks.
+    """
+    if not job_id:
+        job_id = str(uuid.uuid4())
+        
+    print(f"[Renderer] Starting Job {job_id}")
+    output_filename = f"{job_id}.mp4"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    
+    scenes = storyboard.get("scenes", [])
     clips = []
-
+    
     use_voiceover = storyboard.get("use_voiceover", False)
     use_music = storyboard.get("use_music", False)
-    music_style = storyboard.get("music_style", "Upbeat")
-    aspect_ratio = storyboard.get("aspect_ratio", "9:16")
-
+    
+    # 1. Build Clips
     for scene in scenes:
         scene["use_voiceover"] = use_voiceover
-        scene["aspect_ratio"] = aspect_ratio
         clip = _build_clip_from_scene(scene)
         if clip:
             clips.append(clip)
-
+            
     if not clips:
-        with open(output_file, "wb") as f:
-            f.write(b"")
-        return JobResponse(
-            job_id=job_id,
-            status="error",
-            output_url=f"/media/output/{job_id}.mp4",
-            message="Storyboard had no valid scenes.",
-        )
-
+        print("[Renderer] No clips generated.")
+        return
+        
     try:
-        # Concatenate with a subtle crossfade (compose method implies we handle logic, 
-        # but pure list concat is simpler unless we specifically add transitions)
-        final = concatenate_videoclips(clips, method="compose")
-
-        # Slight color “cinema” tweak – slightly increase contrast/darken
-        final = final.fx(lambda clip: clip.fl_image(
-            lambda frame: (frame * 1.02).clip(0, 255)
-        ))
-
-        # 6) Add Background Music
+        # 2. Concatenate
+        final_clip = concatenate_videoclips(clips, method="compose")
+        
+        # 3. Add Music (Simplified)
         if use_music:
-            # Placeholder: In prod, map style to file
-            # For now, we assume a file exists or we skip
-            music_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "music", "bg_music.mp3")
-            if os.path.exists(music_path):
+             music_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "music", "bg_music.mp3")
+             if not os.path.exists(music_path):
+                 # Try finding any mp3 in assets/music
+                 music_dir = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "music")
+                 if os.path.exists(music_dir):
+                     files = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+                     if files:
+                         music_path = os.path.join(music_dir, files[0])
+            
+             if os.path.exists(music_path):
                 bg_music = AudioFileClip(music_path)
-                # Loop music to match video duration
-                if bg_music.duration < final.duration:
-                    # Simple loop logic requires loop function or making a new clip
-                    # For MVP, just subclip or let it play once. 
-                    # MoviePy loop: afx.audio_loop(bg_music, duration=final.duration)
-                    pass 
-                
-                bg_music = bg_music.subclip(0, min(bg_music.duration, final.duration))
-                bg_music = bg_music.volumex(0.15) # Low volume background
-
-                if final.audio:
-                    final_audio = CompositeAudioClip([final.audio, bg_music])
+                # Loop
+                if bg_music.duration < final_clip.duration:
+                    bg_music = afx.audio_loop(bg_music, duration=final_clip.duration)
                 else:
-                    final_audio = bg_music
+                    bg_music = bg_music.subclip(0, final_clip.duration)
                 
-                final = final.set_audio(final_audio)
+                bg_music = bg_music.volumex(0.15) # Background level
+                
+                if final_clip.audio:
+                    final_clip.audio = CompositeAudioClip([final_clip.audio, bg_music])
+                else:
+                    final_clip.audio = bg_music
 
-        final.write_videofile(
-            output_file,
-            fps=30,
+        # 4. Write File (The slow part)
+        print(f"[Renderer] Writing video to {output_path}...")
+        final_clip.write_videofile(
+            output_path,
+            fps=24, # 24fps is faster than 30 and cinematic
             codec="libx264",
             audio_codec="aac",
-            preset="ultrafast",
+            preset="ultrafast", # Fastest encoding
             threads=4,
-            verbose=False,
-            logger=None,
+            logger=None # Reduce console noise
         )
-
+        
+        final_clip.close()
         for c in clips:
             c.close()
-        final.close()
+            
+        print(f"[Renderer] Job {job_id} Completed. saved to {output_path}")
 
-        return JobResponse(
-            job_id=job_id,
-            status="completed",
-            output_url=f"/media/output/{job_id}.mp4",
-            message="Render complete.",
-        )
     except Exception as e:
-        print(f"Render failed: {e}")
-        return JobResponse(
-            job_id=job_id,
-            status="failed",
-            message=f"Render failed: {str(e)}",
-        )
+        print(f"[Renderer] Job {job_id} Failed: {e}")
 
-
+# Async wrapper if needed, but router uses sync with BackgroundTasks
 async def get_job_status(job_id: str) -> JobResponse:
     output_path = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
     if os.path.exists(output_path):
         return JobResponse(
             job_id=job_id,
-            status="completed",
+            status="completed", # Frontend checks for this
             output_url=f"/media/output/{job_id}.mp4",
+            message="Render complete"
         )
-    return JobResponse(job_id=job_id, status="unknown", message="Job not found")
+    return JobResponse(job_id=job_id, status="processing", message="Rendering...")

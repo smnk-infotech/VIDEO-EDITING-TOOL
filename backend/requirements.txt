@@ -1,6 +1,8 @@
 fastapi
 uvicorn
+imageio-ffmpeg
 python-multipart
+google-cloud-storage
 moviepy
 opencv-python
 google-generativeai

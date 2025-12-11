@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+moviepy
+opencv-python
+google-generativeai
+gTTS
+pytest
+httpx

@@ -1,0 +1,29 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Environments & Config (Secrets)
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Build & Logs
+.next/
+build/
+dist/
+*.log
+
+# Media Output (Keep inputs if desired, but ignore generated)
+backend/media/output/
+backend/media/input/
+backend/media/temp/
+backend/tts_*.mp3

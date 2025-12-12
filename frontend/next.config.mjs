@@ -7,7 +7,8 @@ const nextConfig = {
         return [
           {
             source: '/api/:path*',
-            destination: 'https://avea-backend-4ykll4ioma-uc.a.run.app/:path*',
+            // Proxy to local backend
+            destination: 'http://127.0.0.1:8000/api/:path*',
           },
         ]
       },

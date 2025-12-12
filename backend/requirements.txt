@@ -7,6 +7,7 @@ google-generativeai
 gTTS
 pytest
 httpx
+google-cloud-tasks
 # Pinned versions for stability from runbook
 moviepy==1.0.3
 imageio==2.31.2

@@ -1,71 +1,91 @@
-from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks
-from typing import List
+
+import os
+import json
+from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, Header, HTTPException
+from typing import List, Dict, Any
 import uuid
-from ..services import flow_orchestrator, renderer, storage
+from google.cloud import tasks_v2
+from google.protobuf import timestamp_pb2, duration_pb2
+
+from ..services import flow_orchestrator, renderer, storage, jobs
 from ..models.job import JobResponse
 
 api_router = APIRouter()
 
+# --- Security --- 
+# This is a simple shared secret. In a real app, use something more robust like OIDC.
+WORKER_SECRET_TOKEN = os.getenv("WORKER_SECRET_TOKEN", "a-very-secret-token")
+
+# --- Cloud Tasks --- 
+TASKS_CLIENT = tasks_v2.CloudTasksClient()
+PROJECT_ID = os.getenv("FIREBASE_PROJECT")
+LOCATION = "us-central1"
+QUEUE = "render-queue"
+WORKER_URL = os.getenv("WORKER_URL") # e.g., https://your-cloud-run-service.a.run.app/api/render-worker
+
+PARENT_QUEUE = TASKS_CLIENT.queue_path(PROJECT_ID, LOCATION, QUEUE)
 
 @api_router.get("/health")
 async def health_check():
     return {"status": "ok"}
 
-
-@api_router.post("/analyze", response_model=dict)
-async def analyze_media(
-    background_tasks: BackgroundTasks,
-    files: List[UploadFile] = File(...),
-    style: str = Form("Hollywood"),
-    duration_seconds: int = Form(30),
-    aspect_ratio: str = Form("9:16"),
-    language: str = Form("Auto"),
-    use_music: bool = Form(False),
-    use_voiceover: bool = Form(False),
-):
-    print(f"[API] Analyze request received. Files: {len(files)}, Style: {style}")
-    
-    stored_paths = await storage.save_uploads(files)
-
-    # 1. Plan Storyboard (Fast, uses Gemini)
-    storyboard = await flow_orchestrator.plan_storyboard(
-        media_paths=stored_paths,
-        style=style,
-        duration_seconds=duration_seconds,
-        aspect_ratio=aspect_ratio,
-        use_music=use_music,
-        use_voiceover=use_voiceover,
-    )
-    
-    # 2. Assign Job ID immediately
-    job_id = str(uuid.uuid4())
-    storyboard["job_id"] = job_id
-    
-    # 3. Offload Rendering to Background (Non-blocking)
-    # Note: We call a synchronous wrapper or change renderer to sync to use threadpool
-    background_tasks.add_task(renderer.render_from_storyboard_sync, storyboard, job_id)
-    
-    return {
-        **storyboard,
-        "job_id": job_id,
-        "output_url": None, # Not ready yet
-        "status": "processing"
-    }
-
+@api_router.post("/signed-upload-url")
+async def get_signed_upload_url(file_name: str, content_type: str):
+    """Get a signed URL for uploading a file to GCS."""
+    return {"url": storage.get_signed_upload_url(file_name, content_type)}
 
 @api_router.post("/render", response_model=JobResponse)
-async def render_reel(storyboard: dict):
-    """
-    Accepts storyboard JSON and triggers async render job.
-    For now we can run it sync and just return job_id + file url.
-    """
-    job = await renderer.render_from_storyboard(storyboard)
-    return job
+async def render_reel(
+    storyboard: Dict[str, Any],
+    owner_user: str = "anonymous_user"
+):
+    """Triggers an async render job by creating a Firestore job and a Cloud Task."""
+    job_id = str(uuid.uuid4())
+    jobs.create_job(job_id, owner_user)
 
+    # Extract GCS paths from the storyboard
+    media_paths = [scene["file_path"] for scene in storyboard.get("scenes", []) if "file_path" in scene]
 
-@api_router.get("/status/{job_id}", response_model=JobResponse)
-async def get_status(job_id: str):
-    return await renderer.get_job_status(job_id)
+    # Create a Cloud Task to call the worker
+    task = {
+        "http_request": {
+            "http_method": tasks_v2.HttpMethod.POST,
+            "url": WORKER_URL,
+            "headers": {"Content-Type": "application/json", "X-Worker-Token": WORKER_SECRET_TOKEN},
+            "body": json.dumps({
+                "job_id": job_id,
+                "storyboard": storyboard,
+                "media_paths": media_paths
+            }).encode()
+        },
+        "schedule_time": timestamp_pb2.Timestamp(seconds=int(duration_pb2.Duration(seconds=1).seconds) + int(os.times()[4]))
+
+    }
+    
+    TASKS_CLIENT.create_task(parent=PARENT_QUEUE, task=task)
+
+    return JobResponse(job_id=job_id, status="queued")
+
+@api_router.post("/render-worker")
+async def render_worker(
+    task_payload: Dict[str, Any],
+    x_worker_token: str = Header(None)
+):
+    """Protected endpoint called by Cloud Tasks to execute the render job."""
+    if x_worker_token != WORKER_SECRET_TOKEN:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    job_id = task_payload.get("job_id")
+    storyboard = task_payload.get("storyboard")
+    media_paths = task_payload.get("media_paths")
+
+    if not all([job_id, storyboard, media_paths]):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    # This is a synchronous, long-running process
+    renderer.render_from_storyboard(job_id, storyboard, media_paths)
+
+    return {"status": "completed"}
 
 
 from ..services import chat_service
@@ -83,3 +103,4 @@ async def chat_edit(request: ChatRequest):
     """
     result = await chat_service.process_edit_request(request.storyboard, request.message)
     return result
+

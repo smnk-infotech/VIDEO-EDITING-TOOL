@@ -24,7 +24,7 @@ else:
 # - Media: veo-3.0-generate, imagen-4.0-generate
 
 # Selected for Video Analysis (Speed + VQA capabilities):
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-2.5-flash"
 
 
 def _get_media_info(path: str) -> str:

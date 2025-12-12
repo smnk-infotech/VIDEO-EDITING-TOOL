@@ -9,13 +9,13 @@ interface Message {
 }
 
 interface Scene {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface Storyboard {
     style?: string;
     scenes?: Scene[];
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface ChatInterfaceProps {

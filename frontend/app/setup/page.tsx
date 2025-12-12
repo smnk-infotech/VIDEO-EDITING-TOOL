@@ -18,7 +18,6 @@ export default function SetupPage() {
 
     // Processing State
     const [progress, setProgress] = useState({ upload: 0, subtitles: 0, visuals: 0 });
-    const [statusText, setStatusText] = useState('Starting upload...');
 
     // Mouse Parallax for blobs -> Subtle movement
     useEffect(() => {
@@ -47,14 +46,12 @@ export default function SetupPage() {
     const startProcessing = async () => {
         if (!file) return;
         setStep('processing');
-        setStatusText('Uploading your file...');
         for (let i = 0; i <= 100; i += 10) {
             setProgress(prev => ({ ...prev, upload: i }));
             await new Promise(r => setTimeout(r, 200));
         }
 
         try {
-            setStatusText('Generating subtitles & analyzing...');
             setProgress(prev => ({ ...prev, subtitles: 20 }));
 
             const formData = new FormData();
@@ -76,10 +73,8 @@ export default function SetupPage() {
             const data = await res.json();
 
             setProgress(prev => ({ ...prev, subtitles: 100, visuals: 50 }));
-            setStatusText('Adding visuals & B-rolls...');
 
             setProgress(prev => ({ ...prev, subtitles: 100, visuals: 100 }));
-            setStatusText('Finalizing...');
 
             // OFF-LOAD WAIT TO DASHBOARD
             // We don\'t wait for render here anymore. We go straight to dashboard.

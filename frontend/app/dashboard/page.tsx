@@ -6,7 +6,7 @@ import ContextPanel from '../components/ContextPanel';
 import ChatInterface from '../components/ChatInterface';
 
 interface Storyboard {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export default function DashboardPage() {

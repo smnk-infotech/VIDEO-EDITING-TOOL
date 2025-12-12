@@ -5,6 +5,10 @@ import Sidebar from '../components/Sidebar';
 import ContextPanel from '../components/ContextPanel';
 import ChatInterface from '../components/ChatInterface';
 
+interface Storyboard {
+    [key: string]: any;
+}
+
 export default function DashboardPage() {
     // --- STATE ---
 
@@ -16,11 +20,11 @@ export default function DashboardPage() {
     const [style, setStyle] = useState('Motivational');
     const [duration, setDuration] = useState(30);
     const [aspectRatio, setAspectRatio] = useState('9:16');
-    const [useVoiceover, setUseVoiceover] = useState(false);
-    const [useMusic, setUseMusic] = useState(false);
+    const useVoiceover = false;
+    const useMusic = false;
 
     // AI Brain State
-    const [storyboard, setStoryboard] = useState<any>(null);
+    const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
 
     // Processing State
     const [isProcessing, setIsProcessing] = useState(false);
@@ -132,7 +136,7 @@ export default function DashboardPage() {
         }
     };
 
-    const handleUpdateStoryboard = async (newStoryboard: any) => {
+    const handleUpdateStoryboard = async (newStoryboard: Storyboard) => {
         // Called by Chat Interface when AI modifies the plan
         setStoryboard(newStoryboard);
         setIsProcessing(true);

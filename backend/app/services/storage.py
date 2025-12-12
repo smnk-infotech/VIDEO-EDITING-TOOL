@@ -38,7 +38,7 @@ async def save_uploads(files: List[UploadFile]) -> List[str]:
     
     if IS_CLOUD_RUN:
         # Save to /tmp for processing (It's an in-memory tempfs on Cloud Run usually)
-        temp_dir = "/tmp/input"
+        temp_dir = INPUT_DIR # Use the correct input directory
         os.makedirs(temp_dir, exist_ok=True)
         
         for f in files:
@@ -64,4 +64,3 @@ def get_output_dir():
         os.makedirs(dir_path, exist_ok=True)
         return dir_path
     return OUTPUT_DIR
-

@@ -1,3 +1,4 @@
+
 from typing import List, Dict, Any
 import asyncio
 
@@ -11,6 +12,8 @@ async def plan_storyboard(
     style: str,
     duration_seconds: int,
     aspect_ratio: str = "9:16",
+    use_music: bool = False,
+    use_voiceover: bool = False,
 ) -> Dict[str, Any]:
     """
     Main orchestration entry for planning the reel.
@@ -61,4 +64,6 @@ async def plan_storyboard(
             else:
                 print(f"[Orchestrator] Scene {i+1} generation skipped/failed.")
 
+    storyboard["use_music"] = use_music
+    storyboard["use_voiceover"] = use_voiceover
     return storyboard

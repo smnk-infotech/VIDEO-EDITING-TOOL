@@ -2,10 +2,10 @@ import os
 import uuid
 import asyncio
 from typing import Dict, Any, List
-from moviepy.config import change_settings
+# from moviepy.config import change_settings
 
 # Configure ImageMagick manually for Windows
-change_settings({"IMAGEMAGICK_BINARY": r"C:\Program Files\ImageMagick-7.1.2-Q16-HDRI\magick.exe"})
+# change_settings({"IMAGEMAGICK_BINARY": r"C:\Program Files\ImageMagick-7.1.2-Q16-HDRI\magick.exe"})
 
 from moviepy.editor import (
     VideoFileClip,
@@ -57,11 +57,13 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
         base_clip = ColorClip(size=(target_w, target_h), color=(30, 30, 30), duration=duration)
         try:
             # Simple text overlay for B-Roll placeholder
+            # Note: TextClip requires ImageMagick. If missing, this might fail.
             txt = TextClip(f"B-ROLL\n{keyword}", fontsize=70, color='yellow', font='Arial-Bold', method='caption', size=(target_w - 100, None))
             txt = txt.set_pos('center').set_duration(duration)
             base_clip = CompositeVideoClip([base_clip, txt])
         except Exception as e:
-            print(f"B-Roll Text failed: {e}")
+            print(f"B-Roll Text failed (likely missing ImageMagick): {e}")
+            # Continue with just the color clip
 
     elif input_type == "user_clip":
          try:
@@ -117,6 +119,8 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
     clip_with_caption = base_clip
     if caption:
         try:
+            # Check if we can create a simple TextClip to verify ImageMagick
+            # If this fails, we skip the caption
             txt = TextClip(
                 caption,
                 fontsize=60,
@@ -136,7 +140,7 @@ def _build_clip_from_scene(scene: Dict[str, Any]):
             )
             clip_with_caption = CompositeVideoClip([base_clip, txt_bg])
         except Exception as e:
-            print(f"Caption failed: {e}")
+            print(f"Caption failed (likely missing ImageMagick): {e}")
             clip_with_caption = base_clip
 
     # 5) Voiceover

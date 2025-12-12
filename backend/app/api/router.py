@@ -14,7 +14,9 @@ async def analyze_media(
     style: str = Form("Hollywood"),
     duration_seconds: int = Form(30),
     aspect_ratio: str = Form("9:16"),
-    language: str = Form("Auto"), 
+    language: str = Form("Auto"),
+    use_music: bool = Form(False),
+    use_voiceover: bool = Form(False),
 ):
     print(f"[API] Analyze request received. Files: {len(files)}, Style: {style}")
     
@@ -26,6 +28,8 @@ async def analyze_media(
         style=style,
         duration_seconds=duration_seconds,
         aspect_ratio=aspect_ratio,
+        use_music=use_music,
+        use_voiceover=use_voiceover,
     )
     
     # 2. Assign Job ID immediately

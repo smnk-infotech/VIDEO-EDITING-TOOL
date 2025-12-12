@@ -113,47 +113,47 @@ def _create_fallback_storyboard(media_paths: List[str], style: str, target_durat
         "note": "Generated via Smart Fallback (API Error)"
     }
 
-# def _compress_video_for_analysis(input_path: str) -> str:
-#     """
-#     Compresses video to 360p low bitrate for faster global upload & analysis.
-#     Returns path to compressed temp file.
-#     """
-#     if not input_path.lower().endswith((".mp4", ".mov", ".avi", ".mkv")):
-#         return input_path # Skip images
+def _compress_video_for_analysis(input_path: str) -> str:
+    """
+    Compresses video to 360p low bitrate for faster global upload & analysis.
+    Returns path to compressed temp file.
+    """
+    if not input_path.lower().endswith((".mp4", ".mov", ".avi", ".mkv")):
+        return input_path # Skip images
         
-#     try:
-#         temp_dir = os.path.dirname(input_path)
-#         filename = os.path.basename(input_path)
-#         output_path = os.path.join(temp_dir, f"temp_lowres_{filename}")
+    try:
+        temp_dir = os.path.dirname(input_path)
+        filename = os.path.basename(input_path)
+        output_path = os.path.join(temp_dir, f"temp_lowres_{filename}")
         
-#         # Check if already exists from previous run
-#         if os.path.exists(output_path):
-#             return output_path
+        # Check if already exists from previous run
+        if os.path.exists(output_path):
+            return output_path
 
-#         # FFmpeg command: Scale to 360p height, max 1000k bitrate, ultra fast preset
-#         # This reduces a 100MB file to ~5MB in seconds.
-#         import imageio_ffmpeg
-#         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        # FFmpeg command: Scale to 360p height, max 1000k bitrate, ultra fast preset
+        # This reduces a 100MB file to ~5MB in seconds.
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         
-#         cmd = [
-#             ffmpeg_exe, "-y",
-#             "-i", input_path,
-#             "-vf", "scale=-2:360", # Maintain aspect ratio, height 360
-#             "-b:v", "700k", # Low bitrate
-#             "-preset", "ultrafast",
-#             "-c:a", "copy", # Copy audio (fast)
-#             output_path
-#         ]
+        cmd = [
+            ffmpeg_exe, "-y",
+            "-i", input_path,
+            "-vf", "scale=-2:360", # Maintain aspect ratio, height 360
+            "-b:v", "700k", # Low bitrate
+            "-preset", "ultrafast",
+            "-c:a", "copy", # Copy audio (fast)
+            output_path
+        ]
         
-#         # Suppress output unless error
-#         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Suppress output unless error
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
-#         print(f"[Compress] Reduced {filename} for analysis -> {output_path}")
-#         return output_path
+        print(f"[Compress] Reduced {filename} for analysis -> {output_path}")
+        return output_path
     
-#     except Exception as e:
-#         print(f"[Compress] Failed to compress {input_path}, using original. Error: {e}")
-#         return input_path
+    except Exception as e:
+        print(f"[Compress] Failed to compress {input_path}, using original. Error: {e}")
+        return input_path
 
 def _upload_single_file(path: str):
     """Blocking upload function to be run in a thread."""
@@ -162,8 +162,7 @@ def _upload_single_file(path: str):
             return None
         
         # OPTIMIZATION: Compress before upload
-        # upload_path = _compress_video_for_analysis(path)
-        upload_path = path # Bypass compression
+        upload_path = _compress_video_for_analysis(path)
             
         print(f"Starting upload: {os.path.basename(upload_path)}...")
         file_ref = genai.upload_file(path=upload_path)

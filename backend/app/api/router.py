@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks
 from typing import List
+import uuid
 from ..services import flow_orchestrator, renderer, storage
 from ..models.job import JobResponse
 
@@ -28,7 +29,6 @@ async def analyze_media(
     )
     
     # 2. Assign Job ID immediately
-    import uuid
     job_id = str(uuid.uuid4())
     storyboard["job_id"] = job_id
     

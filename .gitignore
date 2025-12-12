@@ -1,29 +1,24 @@
-# System
-.DS_Store
-Thumbs.db
 
-# Environments & Config (Secrets)
-.env
-.env.local
-.env.*.local
-backend/.env
-
-# Dependencies
-node_modules/
+# Python
 __pycache__/
-*.py[cod]
-.venv/
-venv/
+*.pyc
+*.pyo
+*.pyd
+.Python
 env/
+venv/
+.venv/
 
-# Build & Logs
-.next/
-build/
-dist/
+# Node
+node_modules/
+.DS_Store
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# Media Output (Keep inputs if desired, but ignore generated)
-backend/media/output/
-backend/media/input/
-backend/media/temp/
-backend/tts_*.mp3
+# Temp Files
+*.tmp
+*.temp
+*TEMP_MPY_wvf_snd.mp4

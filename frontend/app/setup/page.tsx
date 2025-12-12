@@ -60,6 +60,9 @@ export default function SetupPage() {
             formData.append('duration_seconds', '60');
             formData.append('aspect_ratio', '9:16');
             formData.append('language', language);
+            // Default audio settings for onboarding
+            formData.append('use_music', 'false');
+            formData.append('use_voiceover', 'false');
 
             const res = await fetch('/api/analyze', {
                 method: 'POST',

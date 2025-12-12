@@ -1,0 +1,6 @@
+{
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://avea-video-editor.web.app"
+  },
+  "cloud_run_deploy": {}
+}

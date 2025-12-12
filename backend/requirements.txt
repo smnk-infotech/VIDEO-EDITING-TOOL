@@ -1,11 +1,14 @@
 fastapi
 uvicorn
-imageio-ffmpeg
 python-multipart
 google-cloud-storage
-moviepy
 opencv-python-headless
 google-generativeai
 gTTS
 pytest
 httpx
+# Pinned versions for stability from runbook
+moviepy==1.0.3
+imageio==2.31.2
+imageio-ffmpeg==0.4.8
+gunicorn==20.1.0

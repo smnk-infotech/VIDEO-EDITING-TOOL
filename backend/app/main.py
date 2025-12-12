@@ -26,8 +26,3 @@ app.mount(
     StaticFiles(directory=storage.BASE_MEDIA_DIR),
     name="media",
 )
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}

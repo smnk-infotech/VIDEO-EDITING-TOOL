@@ -24,5 +24,5 @@ ENV PORT=8080
 # Expose port (Cloud Run requires 8080)
 EXPOSE 8080
 
-# Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Command to run the application (using shell form for PORT variable expansion)
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}

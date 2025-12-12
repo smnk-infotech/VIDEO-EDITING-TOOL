@@ -4,7 +4,7 @@ imageio-ffmpeg
 python-multipart
 google-cloud-storage
 moviepy
-opencv-python
+opencv-python-headless
 google-generativeai
 gTTS
 pytest

@@ -39,7 +39,10 @@ OUTPUT FORMAT (Strict JSON):
 """
 
     try:
-        model = genai.GenerativeModel(MODEL_NAME)
+        model = genai.GenerativeModel(
+            MODEL_NAME,
+            generation_config={"response_mime_type": "application/json"}
+        )
         response = model.generate_content(prompt)
         text = response.text.strip()
         

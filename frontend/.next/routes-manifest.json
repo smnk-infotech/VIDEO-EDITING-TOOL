@@ -97,6 +97,12 @@
       "regex": "^/technology(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/technology(?:/)?$"
+    },
+    {
+      "page": "/terms",
+      "regex": "^/terms(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/terms(?:/)?$"
     }
   ],
   "dataRoutes": [],

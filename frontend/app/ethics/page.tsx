@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 import { ShieldCheck, Eye, Lock } from 'lucide-react';
 
 export default function EthicsPage() {
@@ -47,6 +47,8 @@ export default function EthicsPage() {
                     </div>
                 </div>
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

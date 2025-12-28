@@ -1,10 +1,11 @@
 'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 
 export default function ProductPage() {
     return (
-        <main className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100 pb-20">
+        <main className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100 pb-32">
             <ResearchNav />
             <PageHeader
                 label="Product Vision"
@@ -12,7 +13,7 @@ export default function ProductPage() {
                 subtitle="How A.V.E.A perceives, plans, and executes video edits without human intervention."
             />
 
-            <section className="px-6 py-12 max-w-4xl mx-auto space-y-20">
+            <section className="px-6 py-12 max-w-4xl mx-auto space-y-20 pb-32">
 
                 {/* 1. Loop */}
                 <div className="space-y-6">
@@ -69,6 +70,8 @@ export default function ProductPage() {
                 </div>
 
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

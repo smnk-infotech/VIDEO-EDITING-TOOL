@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 
 export default function ContactPage() {
     return (
@@ -38,6 +38,8 @@ export default function ContactPage() {
                     </p>
                 </div>
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

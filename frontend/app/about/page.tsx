@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 
 export default function AboutPage() {
     return (
@@ -29,6 +29,8 @@ export default function AboutPage() {
                     alongside them, learning their taste, anticipating their needs, and handling the drudgery of execution.
                 </p>
             </article>
+
+            <ResearchFooter />
         </main>
     );
 }

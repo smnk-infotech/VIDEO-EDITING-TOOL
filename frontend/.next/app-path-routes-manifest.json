@@ -1,15 +1,16 @@
 {
   "/_not-found/page": "/_not-found",
-  "/contact/page": "/contact",
   "/about/page": "/about",
-  "/careers/page": "/careers",
-  "/dashboard/page": "/dashboard",
-  "/privacy/page": "/privacy",
   "/login/page": "/login",
-  "/ethics/page": "/ethics",
+  "/careers/page": "/careers",
   "/page": "/",
+  "/contact/page": "/contact",
+  "/privacy/page": "/privacy",
   "/product/page": "/product",
-  "/research/page": "/research",
   "/technology/page": "/technology",
-  "/setup/page": "/setup"
+  "/terms/page": "/terms",
+  "/ethics/page": "/ethics",
+  "/dashboard/page": "/dashboard",
+  "/setup/page": "/setup",
+  "/research/page": "/research"
 }

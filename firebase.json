@@ -1,6 +1,5 @@
 {
     "hosting": {
-        "site": "prema-video-editor-live",
         "public": "frontend/out",
         "ignore": [
             "firebase.json",

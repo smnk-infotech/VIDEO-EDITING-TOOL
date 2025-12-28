@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 
 export default function ResearchPage() {
     return (
@@ -39,6 +39,8 @@ export default function ResearchPage() {
                     the happy accidents of a human editor.
                 </p>
             </article>
+
+            <ResearchFooter />
         </main>
     );
 }

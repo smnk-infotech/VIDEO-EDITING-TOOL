@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Play, Cpu, Network, Zap } from 'lucide-react';
 import ResearchNav from './components/Marketing/ResearchNav';
+import ResearchFooter from './components/Marketing/ResearchFooter';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
@@ -99,6 +100,8 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

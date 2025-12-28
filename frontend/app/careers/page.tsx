@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 
 export default function CareersPage() {
     return (
@@ -42,6 +42,8 @@ export default function CareersPage() {
                     </a>
                 </div>
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

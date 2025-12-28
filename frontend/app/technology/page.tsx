@@ -1,6 +1,6 @@
-'use client';
 import ResearchNav from '../components/Marketing/ResearchNav';
 import { PageHeader } from '../components/Marketing/PageHeader';
+import ResearchFooter from '../components/Marketing/ResearchFooter';
 import { Database, Server, Cpu, Lock } from 'lucide-react';
 
 export default function TechnologyPage() {
@@ -47,6 +47,8 @@ export default function TechnologyPage() {
                     specs={["IAM Role-Based Access", "No Client-Side Secrets", "Ephemeral Processing Storage"]}
                 />
             </section>
+
+            <ResearchFooter />
         </main>
     );
 }

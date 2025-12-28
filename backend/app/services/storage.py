@@ -27,11 +27,24 @@ OUTPUT_DIR = os.path.join(BASE_MEDIA_DIR, "output")
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-storage_client = storage.Client()
+storage_client = None
+
+def get_storage_client():
+    global storage_client
+    if storage_client is None:
+        try:
+            storage_client = storage.Client()
+        except Exception as e:
+            print(f"Warning: Could not init storage client: {e}")
+            return None
+    return storage_client
 
 def get_gcs_bucket():
     """Gets the GCS bucket."""
-    return storage_client.bucket(STORAGE_BUCKET)
+    client = get_storage_client()
+    if not client:
+        return None
+    return client.bucket(STORAGE_BUCKET)
 
 def get_signed_upload_url(file_name: str, content_type: str) -> str:
     """Generates a signed URL for uploading a file to GCS."""

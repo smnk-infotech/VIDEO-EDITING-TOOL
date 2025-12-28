@@ -1,10 +1,10 @@
 import logging
 from typing import List, Dict, Any
 import asyncio
+import json
 from . import storage, renderer
-from .gemini_client import analyze_media_with_gemini
+from ..core.gemini_client import gemini_client
 from .veo_client import generate_broll_with_veo
-from .nano_banana_client import apply_vfx_with_nanobanana
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,12 +70,13 @@ async def plan_storyboard(
     """
     # 1. Get the plan from Gemini
     logger.info("Getting storyboard plan from Gemini...")
-    storyboard = await analyze_media_with_gemini(
-        media_paths=media_paths,
-        style=style,
-        target_duration_seconds=duration_seconds,
-        aspect_ratio=aspect_ratio,
+    storyboard_text = await gemini_client.analyze_video(
+        video_path=media_paths[0], # Simple logic for now
+        prompt=f"Act as a professional video editor. Analyze this footage for a {style} video..."
     )
+    # Parse JSON
+    cleaned = storyboard_text.replace("```json", "").replace("```", "")
+    storyboard = json.loads(cleaned)
     logger.info("Received storyboard plan from Gemini.")
 
     scenes = storyboard.get("scenes", [])
@@ -99,14 +100,7 @@ async def plan_storyboard(
                     duration_seconds=int(duration)
                 )
 
-            elif "nano" in provider:
-                 logger.info(f"[Orchestrator] Generating Nano Banana VFX for scene {i+1}...")
-                 # Nano usually processes an existing clip, but if used for generation:
-                 # logical placeholder for now. If input was user_clip + vfx, logic would differ.
-                 generated_path = await apply_vfx_with_nanobanana(
-                     input_path="", # Placeholder if strict generation, or pass a source
-                     style=style
-                 )
+                logger.info(f"Veo generation complete.")
 
             if generated_path:
                 logger.info(f"[Orchestrator] Scene {i+1} generated at {generated_path}")

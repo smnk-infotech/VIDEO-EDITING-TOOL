@@ -1,4 +1,4 @@
-// File: /home/user/VIDEO-EDITING-TOOL/frontend/app/page.tsx
+// File: E:\VIDEO EDITING TOOL\frontend\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

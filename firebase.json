@@ -1,5 +1,6 @@
 {
     "hosting": {
+        "site": "prema-video-editor-live",
         "public": "frontend/out",
         "ignore": [
             "firebase.json",
@@ -10,7 +11,7 @@
             {
                 "source": "/api/**",
                 "run": {
-                    "serviceId": "avea-backend",
+                    "serviceId": "prema-backend",
                     "region": "us-central1"
                 }
             },

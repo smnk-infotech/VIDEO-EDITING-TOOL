@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: "A.V.E.A – Automated Video Editing Agent",
-    description: "AI-powered Hollywood-style reels and shorts generator.",
+    title: "prema.ai – Cognitive Director Video Agent",
+    description: "The world's first autonomous Director AI for viral video editing.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

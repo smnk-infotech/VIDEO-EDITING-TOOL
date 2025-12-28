@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .api.router import api_router
-from .api.analyze import analyze_router
 from .services import storage
 
 app = FastAPI(
@@ -20,7 +19,6 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
-app.include_router(analyze_router, prefix="/api")
 
 # Serve media directory (input + output) as static files
 app.mount(

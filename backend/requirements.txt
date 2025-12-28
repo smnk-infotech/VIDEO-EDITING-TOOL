@@ -13,3 +13,6 @@ moviepy==1.0.3
 imageio==2.31.2
 imageio-ffmpeg==0.4.8
 gunicorn==20.1.0
+google-cloud-firestore
+firebase-admin
+pydantic-settings

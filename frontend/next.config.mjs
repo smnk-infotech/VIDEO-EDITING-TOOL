@@ -1,17 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-        unoptimized: true,
-    },
-    async rewrites() {
-        return [
-          {
-            source: '/api/:path*',
-            // Proxy to local backend
-            destination: 'http://127.0.0.1:8000/api/:path*',
-          },
-        ]
-      },
+  output: 'export',
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

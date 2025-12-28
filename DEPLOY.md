@@ -1,8 +1,13 @@
 # 🚀 Deployment Guide: A.V.E.A on Firebase
 
-This project is configured for a **Serverless Architecture**:
-- **Frontend**: Firebase Hosting (Static edge caching)
-- **Backend**: Cloud Run (Auto-scaling Python container)
+- **Frontend**: Firebase Hosting (proxy to backend) & Cloud Run (SSR)
+- **Backend**: Cloud Run (Python FastAPI, Port 8080)
+- **Security**: All API keys injected via Cloud Run Environment Variables (No client-side keys).
+
+## 🔒 Architecture & Security Audit
+- **Routing**: Users -> Firebase Hosting -> `/api/**` -> Cloud Run Backend.
+- **Secrets**: `GOOGLE_API_KEY`, `FIREBASE_CREDENTIALS` are strictly server-side.
+- **Port**: Backend listens on `$PORT` (8080) explicitly.
 
 ---
 
@@ -46,7 +51,18 @@ Go to your GitHub Repo -> **Settings** -> **Secrets and variables** -> **Actions
 
 ### Option B: Manual (CLI)
 
-**Backend:**
+### Frontend (Cloud Run)
+- **URL**: `https://prema-frontend-574658991310.us-central1.run.app`
+- **Status**: Live
+
+### Backend (Cloud Run)
+- **URL**: `https://prema-backend-574658991310.us-central1.run.app`
+- **Region**: `us-central1`
+- **Status**: Live & Operational
+
+### Frontend (Firebase Hosting)
+- **URL**: `https://prema-video-editor-live.web.app`
+- **Status**: ✅ **Live & Deployed**
 ```bash
 cd backend
 gcloud run deploy avea-backend --source . --region us-central1 --allow-unauthenticated --set-env-vars GOOGLE_API_KEY=your_key
@@ -55,7 +71,17 @@ gcloud run deploy avea-backend --source . --region us-central1 --allow-unauthent
 **Frontend:**
 ```bash
 cd frontend
-npm run build
+# Development Mode (Robust)
+gcloud run deploy prema-frontend --source . --region us-central1 --allow-unauthenticated --set-env-vars BACKEND_URL=https://prema-backend-574658991310.us-central1.run.app
+```
+
+### Option C: Firebase Hosting (Custom Domain)
+> **Note:** Requires manual project linking in Firebase Console first and ensuring `firebase login` account has owner/editor access.
+```bash
+# Verify project visibility first
+firebase projects:list 
+
+# Then deploy
 firebase deploy --only hosting
 ```
 

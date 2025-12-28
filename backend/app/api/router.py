@@ -104,3 +104,66 @@ async def chat_edit(request: ChatRequest):
     result = await chat_service.process_edit_request(request.storyboard, request.message)
     return result
 
+
+from ..core.gemini_client import gemini_client
+from ..core.project_manager import project_manager
+
+@api_router.post("/analyze")
+async def analyze_media(
+    files: List[UploadFile] = File(...),
+    style: str = Form("Motivational"),
+    duration_seconds: int = Form(30),
+    aspect_ratio: str = Form("9:16"),
+    use_music: str = Form("false"),
+    use_voiceover: str = Form("false")
+):
+    """
+    Analyzes uploaded video files using Gemini Pro 3.0.
+    """
+    # Create project entry
+    user_id = "dev_user_123" # Default dev user
+    
+    # Save first file temporarily for analysis context (Gemini handles the rest via upload)
+    # in real prod, upload to GCS. Here, local temp.
+    file_obj = files[0]
+    file_path = f"temp_uploads/{file_obj.filename}"
+    
+    with open(file_path, "wb") as buffer:
+        content = await file_obj.read()
+        buffer.write(content)
+        
+    project = project_manager.create_project(
+        name=f"Project {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        user_id=user_id,
+        file_path=file_path
+    )
+    
+    # Trigger Analysis
+    try:
+        # Construct prompt based on user inputs
+        prompt = f"""
+        Act as a professional video editor. Analyze this footage for a {style} video.
+        Target duration: {duration_seconds}s. Aspect Ratio: {aspect_ratio}.
+        Audio: Music={use_music}, Voiceover={use_voiceover}.
+        
+        Provide a JSON response with:
+        1. "summary": A strategic critique.
+        2. "scores": {{ "viralPotential": 0-100, "retention": "High/Med/Low" }}
+        3. "scenes": A list of cuts with "start", "end", "description".
+        """
+        
+        analysis_text = await gemini_client.analyze_video(file_path, prompt)
+        
+        # Clean parsed JSON (Gemini sometimes adds markdown blocks)
+        cleaned_text = analysis_text.replace("```json", "").replace("```", "")
+        result = json.loads(cleaned_text)
+        
+        # Update project
+        result["projectId"] = project["id"]
+        project_manager.update_project_status(project["id"], "analyzed", result)
+        
+        return result
+        
+    except Exception as e:
+        print(f"Analysis Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

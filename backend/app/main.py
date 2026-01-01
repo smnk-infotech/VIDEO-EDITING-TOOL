@@ -10,6 +10,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+@app.on_event("startup")
+async def startup_event():
+    print("info:     Backend Starting...")
+    print("info:     Environment: PRODUCTION (Cloud Run)")
+    print("info:     Docs available at /docs")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # TODO: tighten in production

@@ -1,6 +1,16 @@
 {
   "projects": {
-    "default": "video-editing-git-918280-158e1"
-  }
+    "default": "video-editing-git-918280-158e1",
+    "prod": "video-editing-git-918280-158e1"
+  },
+  "targets": {
+    "video-editing-git-918280-158e1": {
+      "hosting": {
+        "live": [
+          "prema-video-editor-live"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
-

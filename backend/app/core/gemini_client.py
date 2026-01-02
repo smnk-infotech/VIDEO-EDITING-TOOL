@@ -1,5 +1,6 @@
 import google.generativeai as genai
 import os
+import json
 import time
 from .config import settings
 
@@ -21,16 +22,12 @@ class GeminiClient:
     async def analyze_video(self, video_path: str, prompt: str = "Analyze this video for viral potential."):
         if not self.model:
             print("MOCK ANALYSIS: Gemini API Key missing.")
-            # Return a valid mock JSON structure so the frontend doesn't break
-            return """
-            ```json
-            {
-                "summary": "Mock Analysis (API Key Missing)",
+            # Return raw JSON string to avoid parsing errors in router
+            return json.dumps({
+                "summary": "Mock Analysis (API Key Missing). Please add GOOGLE_API_KEY to backend/.env to enable real AI.",
                 "scores": {"viralPotential": 75, "retention": "Med"},
                 "scenes": []
-            }
-            ```
-            """
+            })
 
         print(f"Uploading file to Gemini: {video_path}")
         

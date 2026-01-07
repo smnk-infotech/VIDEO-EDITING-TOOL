@@ -1,0 +1,72 @@
+[
+  {
+    "id": "9beb6bad-ed78-4e15-b9f6-3d31926d77f1",
+    "name": "Project 2026-01-02 23:57",
+    "userId": "dev_user_123",
+    "status": "analyzed",
+    "createdAt": "2026-01-02T23:57:43.278196",
+    "videoPath": "temp_uploads/reels.mp4",
+    "thumbnailUrl": "/placeholder.jpg",
+    "analysisResult": {
+      "summary": "The footage features a speaker enthusiastically introducing a page focused on AI apps, future tech courses, and free online learning resources. While the speaker's energy and direct address are positive, the static framing and plain background limit its visual dynamism for a standalone 'motivational video.' The content itself is more informational and educational, though it can be motivating for individuals looking to upskill in tech. To achieve a true 60-second motivational video, this footage alone is insufficient; it would require complementary B-roll, motion graphics, or more varied camera angles. However, by making strategic cuts to emphasize key points and leverage the speaker's enthusiasm, we can create a punchy, informative, and subtly motivating introduction within a shorter timeframe, which can then be part of a larger 60-second piece. Adhering strictly to 'from this footage' and 'no music/voiceover' constraints means the final edit will be shorter than 60 seconds (approximately 30-35 seconds) but highly focused.",
+      "scores": {
+        "viralPotential": 45,
+        "retention": "Medium"
+      },
+      "scenes": [
+        {
+          "start": "00:00",
+          "end": "00:04",
+          "description": "Energetic opening hook, addressing tech enthusiasts and inviting them in. Cuts immediately to the core question/statement."
+        },
+        {
+          "start": "00:04",
+          "end": "00:07",
+          "description": "Confident declaration: 'You've come to the right place.' Followed by a concise self-introduction."
+        },
+        {
+          "start": "00:07",
+          "end": "00:10",
+          "description": "First value proposition: 'On this page, about AI apps,' highlighting relevant tech topics."
+        },
+        {
+          "start": "00:10",
+          "end": "00:13",
+          "description": "Second value proposition: 'And which courses will be prominent in the future,' emphasizing career growth."
+        },
+        {
+          "start": "00:14",
+          "end": "00:18",
+          "description": "Third value proposition: 'And which websites offer various courses for free,' focusing on accessible learning opportunities."
+        },
+        {
+          "start": "00:19",
+          "end": "00:21",
+          "description": "Build-up for engagement: 'So, all you need to do is one thing,' creating anticipation for the call to action."
+        },
+        {
+          "start": "00:22",
+          "end": "00:26",
+          "description": "Direct and enthusiastic call to action: 'Join me and participate in my journey,' inviting collaboration."
+        },
+        {
+          "start": "00:27",
+          "end": "00:31",
+          "description": "Strong benefit statement: 'In this journey, I'll give you all my skills and knowledge,' reinforcing the value of engagement."
+        },
+        {
+          "start": "00:32",
+          "end": "00:34",
+          "description": "Clear and simplified final call to action: 'For that, you just need to do one thing: click on my follow button,' with a gestural cue."
+        },
+        {
+          "start": "00:35",
+          "end": "00:37",
+          "description": "Enthusiastic and branded closing: 'So, welcome to SMAC K Infotech,' concluding on a positive note."
+        }
+      ],
+      "projectId": "9beb6bad-ed78-4e15-b9f6-3d31926d77f1"
+    },
+    "updatedAt": "2026-01-02T23:58:29.901859"
+  }
+]

@@ -9,12 +9,16 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     BACKEND_PORT: int = 8080
     
+    GOOGLE_CLOUD_PROJECT: str = os.getenv("GOOGLE_CLOUD_PROJECT", "video-editing-git-918280-158e1")
+    STORAGE_BUCKET: str = os.getenv("STORAGE_BUCKET", "")
+
     # File Paths
     UPLOAD_DIR: str = os.path.join(os.getcwd(), "temp_uploads")
     OUTPUT_DIR: str = os.path.join(os.getcwd(), "downloads")
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
 

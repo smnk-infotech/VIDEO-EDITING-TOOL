@@ -23,8 +23,11 @@ def get_db():
 def create_job(job_id: str, owner_user: str) -> None:
     """Creates a new job in Firestore."""
     client = get_db()
-    if client:
-        doc_ref = client.collection("jobs").document(job_id)
+    if not client:
+        print(f"MOCK DB: Creating job {job_id}")
+        return
+
+    doc_ref = client.collection("jobs").document(job_id)
     doc_ref.set(
         {
             "job_id": job_id,
@@ -41,8 +44,10 @@ def create_job(job_id: str, owner_user: str) -> None:
 def update_job_progress(job_id: str, progress: int, message: Optional[str] = None) -> None:
     """Updates the progress of a job in Firestore."""
     client = get_db()
-    if client:
-        doc_ref = client.collection("jobs").document(job_id)
+    if not client:
+        return
+
+    doc_ref = client.collection("jobs").document(job_id)
     doc_ref.update(
         {
             "progress": progress,
@@ -54,8 +59,10 @@ def update_job_progress(job_id: str, progress: int, message: Optional[str] = Non
 def set_job_status(job_id: str, status: str) -> None:
     """Sets the status of a job in Firestore."""
     client = get_db()
-    if client:
-        doc_ref = client.collection("jobs").document(job_id)
+    if not client:
+        return
+
+    doc_ref = client.collection("jobs").document(job_id)
     doc_ref.update(
         {
             "status": status,
@@ -66,8 +73,10 @@ def set_job_status(job_id: str, status: str) -> None:
 def set_job_complete(job_id: str, output_url: str) -> None:
     """Marks a job as complete in Firestore."""
     client = get_db()
-    if client:
-        doc_ref = client.collection("jobs").document(job_id)
+    if not client:
+        return
+
+    doc_ref = client.collection("jobs").document(job_id)
     doc_ref.update(
         {
             "status": "complete",
@@ -79,7 +88,12 @@ def set_job_complete(job_id: str, output_url: str) -> None:
 
 def set_job_failed(job_id: str, message: str) -> None:
     """Marks a job as failed in Firestore."""
-    doc_ref = db.collection("jobs").document(job_id)
+    client = get_db()
+    if not client:
+        print(f"MOCK DB: Job {job_id} failed: {message}")
+        return
+
+    doc_ref = client.collection("jobs").document(job_id)
     doc_ref.update(
         {
             "status": "failed",

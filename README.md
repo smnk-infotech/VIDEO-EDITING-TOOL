@@ -58,8 +58,8 @@ python -m venv .venv
 # Install Deps
 pip install -r requirements.txt
 
-# Run Server (Port 8000)
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Run Server (Port 8080)
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 ### 2. Frontend

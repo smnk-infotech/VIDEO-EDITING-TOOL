@@ -151,6 +151,7 @@ export default function SetupPage() {
                                     <label className='text-xs font-bold text-slate-400 uppercase tracking-wider ml-1 group-focus-within:text-indigo-600 transition-colors'>Project Name</label>
                                     <div className='relative'>
                                         <input
+                                            suppressHydrationWarning
                                             type='text'
                                             value={videoName}
                                             onChange={e => setVideoName(e.target.value)}
@@ -168,6 +169,7 @@ export default function SetupPage() {
                                     <label className='text-xs font-bold text-slate-400 uppercase tracking-wider ml-1 group-focus-within:text-indigo-600 transition-colors'>Language</label>
                                     <div className='relative'>
                                         <select
+                                            suppressHydrationWarning
                                             value={language}
                                             onChange={e => setLanguage(e.target.value)}
                                             className='w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 appearance-none cursor-pointer group-hover:border-slate-300'

@@ -1,271 +1,135 @@
-'use client';
 
+'use client';
 import { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar';
-import ContextPanel from '../components/ContextPanel';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, Download, Film, Sparkles } from 'lucide-react';
 import ChatInterface from '../components/ChatInterface';
 
-interface Storyboard {
-    [key: string]: unknown;
-}
+export default function Dashboard() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const isNew = searchParams.get('new') === 'true';
 
-export default function DashboardPage() {
-    // --- STATE ---
-
-    // UI Navigation
-    const [activeTab, setActiveTab] = useState('presets');
-
-    // Content State
-    const [files, setFiles] = useState<File[]>([]);
-    const [style, setStyle] = useState('Motivational');
-    const [duration, setDuration] = useState(30);
-    const [aspectRatio, setAspectRatio] = useState('9:16');
-    const useVoiceover = false;
-    const useMusic = false;
-
-    // AI Brain State
-    const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
-
-    // Processing State
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [status, setStatus] = useState('');
+    const [storyboard, setStoryboard] = useState<any>(null);
+    const [status, setStatus] = useState('Idle');
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
 
-    // Load from Onboarding
+    // Initial Load
     useEffect(() => {
-        const storedUrl = localStorage.getItem('avea_onboarding_url');
-        const storedData = localStorage.getItem('avea_onboarding_data');
-        const storedJobId = localStorage.getItem('avea_onboarding_job_id');
+        const dataStr = localStorage.getItem('avea_onboarding_data');
+        if (dataStr) {
+            const data = JSON.parse(dataStr);
+            setStoryboard(data);
+            setJobId(data.job_id); // Use the analysis ID as job ID initially
 
-        if (storedData) {
-            setStoryboard(JSON.parse(storedData));
+            // If it's a fresh analysis, we should trigger a first render (optional)
+            // But let's verify if we have a render URL already? No.
+            // Let's NOT auto-render on load to save time, user can chat to edit.
+            // OR let's auto-render the initial cut.
+            if (isNew) {
+                triggerRender(data);
+            }
         }
+    }, [isNew]);
 
-        if (storedUrl) {
-            setVideoUrl(storedUrl);
-        } else if (storedJobId) {
-            // New logic: If we have a job ID but no URL, we are still processing
-            setIsProcessing(true);
-            setStatus('Finalizing your video...');
-            pollJob(storedJobId);
-            // Clear it so we don't poll forever on refresh if it completed? 
-            // Better to leave it until completion clears it or overwrites URL
-        }
-    }, []);
-
-    // --- HANDLERS ---
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            // Append new files to existing list
-            const newFiles = Array.from(e.target.files);
-            setFiles((prev) => [...prev, ...newFiles]);
+    const triggerRender = async (sb: any) => {
+        setStatus('Rendering...');
+        try {
+            const res = await fetch('http://localhost:8080/api/render', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(sb)
+            });
+            const data = await res.json();
+            setJobId(data.job_id);
+            pollStatus(data.job_id);
+        } catch (e) {
+            console.error(e);
+            setStatus('Render Error');
         }
     };
 
-    const pollJob = (jobId: string) => {
+    const pollStatus = async (id: string) => {
         const interval = setInterval(async () => {
             try {
-                const statusRes = await fetch(`/api/status/${jobId}`);
-                const statusData = await statusRes.json();
+                const res = await fetch(`http://localhost:8080/api/status/${id}`);
+                const data = await res.json();
 
-                if (statusData.status === 'completed') {
+                if (data.status === 'completed' && data.result?.url) {
+                    setVideoUrl(data.result.url);
+                    setStatus('Ready');
                     clearInterval(interval);
-                    setIsProcessing(false);
-                    // Use relative path for video URL
-                    setVideoUrl(statusData.output_url);
-                    setStatus('Completed!');
-                    localStorage.removeItem('avea_onboarding_job_id'); // Clear job ID
-                } else if (statusData.status === 'failed') {
+                } else if (data.status === 'failed') {
+                    setStatus('Failed');
                     clearInterval(interval);
-                    setIsProcessing(false);
-                    alert('Generation Failed: ' + statusData.message);
-                    localStorage.removeItem('avea_onboarding_job_id'); // Clear job ID
+                } else {
+                    setStatus('Processing...');
                 }
             } catch (e) {
-                console.error('Polling error', e);
+                clearInterval(interval);
             }
         }, 2000);
     };
 
-    const handleGenerate = async () => {
-        if (files.length === 0) {
-            alert('Please upload at least one file!');
-            return;
-        }
-        setIsProcessing(true);
-        setStatus('Uploading Files...');
-        setVideoUrl(null);
-        setStoryboard(null);
-
-        const formData = new FormData();
-        files.forEach((f) => formData.append('files', f));
-        formData.append('style', style);
-
-        // Handle 'Auto' duration (0) logic
-        formData.append('duration_seconds', duration.toString());
-        formData.append('aspect_ratio', aspectRatio);
-
-        // Audio flags
-        formData.append('use_music', useMusic.toString());
-        formData.append('use_voiceover', useVoiceover.toString());
-
-        try {
-            setStatus('Analyzing Content (Gemini)...');
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!res.ok) throw new Error('Analysis failed');
-
-            setStatus('Rendering Video (MoviePy)... this may take a moment.');
-            const data = await res.json();
-
-            // Save the brain (storyboard) for Chat
-            setStoryboard(data);
-
-            if (data.job_id) {
-                localStorage.setItem('avea_onboarding_job_id', data.job_id);
-                pollJob(data.job_id);
-            }
-        } catch (e) {
-            console.error(e);
-            setIsProcessing(false);
-            alert('Error starting generation');
-        }
+    const handleUpdateStoryboard = async (newSb: any) => {
+        console.log("New Storyboard:", newSb);
+        setStoryboard(newSb);
+        // Auto-render on edit
+        triggerRender(newSb);
     };
 
-    const handleUpdateStoryboard = async (newStoryboard: Storyboard) => {
-        // Called by Chat Interface when AI modifies the plan
-        setStoryboard(newStoryboard);
-        setIsProcessing(true);
-        setStatus('Re-rendering with changes...');
-        setVideoUrl(null);
-
-        try {
-            const res = await fetch('/api/render', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newStoryboard)
-            });
-            const data = await res.json();
-            if (data.job_id) {
-                localStorage.setItem('avea_onboarding_job_id', data.job_id); 
-                pollJob(data.job_id);
-            }
-        } catch (e) {
-            console.error('Render error', e);
-            setIsProcessing(false);
-            setStatus('Error re-rendering');
-        }
-    };
-
-    // --- RENDER ---
     return (
-        <div className='flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden'>
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center p-8">
+            <h1 className="text-3xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                <Sparkles className="text-indigo-600" /> AVEA Studio
+            </h1>
 
-            {/* 1. SIDEBAR */}
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl">
 
-            {/* 2. CONTEXT PANEL */}
-            <ContextPanel
-                activeTab={activeTab}
-                selectedStyle={style}
-                onStyleSelect={setStyle}
-                files={files}
-                onUpload={handleFileChange}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                duration={duration}
-                setDuration={setDuration}
-            />
-
-            {/* 3. MAIN STAGE */}
-            <div className='flex-1 flex flex-col relative w-full'>
-
-                {/* Header */}
-                <header className='h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10'>
-                    <div className='flex items-center gap-2 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors'>
-                        <span className='text-lg'>←</span>
-                        <span className='text-sm font-medium'>Back to Library</span>
-                    </div>
-
-                    <div className='font-semibold text-slate-700'>New Project</div>
-
-                    <div className='flex gap-3'>
-                        <button className='px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50'>
-                            Give feedback
-                        </button>
-                        <button
-                            onClick={handleGenerate}
-                            disabled={isProcessing}
-                            className={`px-6 py-2 text-sm font-bold text-white rounded-lg shadow-lg shadow-orange-500/20 transition-all ${isProcessing ? 'bg-slate-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'
-                                }`}
-                        >
-                            {isProcessing ? 'Processing...' : '⚡ Export'}
-                        </button>
-                    </div>
-                </header>
-
-                {/* Content Area */}
-                <div className='flex-1 flex overflow-hidden'>
-
-                    {/* Canvas */}
-                    <div className='flex-1 bg-slate-100 flex items-center justify-center p-8 relative overflow-hidden'>
-
-                        {/* Background Pattern */}
-                        <div className='absolute inset-0 opacity-[0.03] pointer-events-none'
-                            style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-                        </div>
-
-                        {isProcessing ? (
-                            // Processing State
-                            <div className='bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full animate-pulse z-10'>
-                                <div className='w-16 h-16 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin mb-6'></div>
-                                <h3 className='text-xl font-bold text-slate-800 mb-2'>Creating Magic</h3>
-                                <p className='text-slate-500 text-center text-sm'>{status}</p>
-                            </div>
-                        ) : videoUrl ? (
-                            // Result State
-                            <div className='relative h-full max-h-[700px] aspect-[9/16] shadow-2xl rounded-2xl overflow-hidden bg-black ring-8 ring-white z-10'>
-                                <video
-                                    src={videoUrl}
-                                    controls
-                                    autoPlay
-                                    className='w-full h-full object-cover'
-                                />
-                            </div>
+                {/* Left: Video Preview */}
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 flex flex-col">
+                    <div className="flex-1 bg-black flex items-center justify-center relative aspect-video">
+                        {videoUrl ? (
+                            <video src={videoUrl} controls className="w-full h-full" autoPlay />
                         ) : (
-                            // Empty State
-                            <div className='text-center z-10'>
-                                <div className='w-64 h-96 border-4 border-dashed border-slate-300 rounded-2xl flex items-center justify-center mb-6 bg-slate-50/50'>
-                                    <span className='text-slate-300 text-6xl'>🎬</span>
-                                </div>
-                                <h3 className='text-lg font-bold text-slate-700'>Ready to Create</h3>
-                                <p className='text-slate-400 text-sm mt-1'>Select a style and click Export</p>
+                            <div className="text-white/50 flex flex-col items-center">
+                                {status === 'Rendering...' || status === 'Processing...' ? (
+                                    <Loader2 className="animate-spin mb-2" size={32} />
+                                ) : (
+                                    <Film size={48} />
+                                )}
+                                <p>{status === 'Idle' ? 'Waiting for edits...' : 'Rendering...'}</p>
                             </div>
                         )}
                     </div>
-
-                    {/* Chat Panel (Right Side) */}
-                    <div className='w-96 border-l border-slate-200 bg-white p-4 hidden lg:flex flex-col'>
-                        <ChatInterface
-                            storyboard={storyboard}
-                            onUpdateStoryboard={handleUpdateStoryboard}
-                        />
+                    <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                        <span className="font-mono text-xs text-slate-400">JOB: {jobId?.slice(0, 8)}</span>
+                        {videoUrl && (
+                            <a href={videoUrl} download className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition">
+                                <Download size={16} /> Download
+                            </a>
+                        )}
                     </div>
                 </div>
 
-                {/* Bottom Bar (Timeline Placeholder) */}
-                <div className='h-16 bg-white border-t border-slate-200 flex items-center px-6 gap-4 shrink-0 z-10'>
-                    <button className='w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200'>▶</button>
-                    <div className='flex-1 h-2 bg-slate-100 rounded-full relative overflow-hidden group cursor-pointer'>
-                        <div className='absolute top-0 left-0 w-1/3 h-full bg-orange-200 group-hover:bg-orange-300 transition-colors'></div>
-                    </div>
-                    <span className='text-xs font-mono text-slate-400'>00:00 / {duration === 0 ? '--:--' : `00:${duration}`}</span>
+                {/* Right: Agent Chat */}
+                <div className="h-[600px]">
+                    <ChatInterface
+                        storyboard={storyboard}
+                        onUpdateStoryboard={handleUpdateStoryboard}
+                    />
                 </div>
+            </div>
 
+            {/* Storyboard Debug View (Optional, good for verification) */}
+            <div className="mt-12 w-full max-w-6xl">
+                <details className="bg-slate-200 p-4 rounded-lg">
+                    <summary className="cursor-pointer font-bold text-slate-600">Debug Intent Plan</summary>
+                    <pre className="text-xs mt-2 overflow-auto max-h-60">
+                        {JSON.stringify(storyboard, null, 2)}
+                    </pre>
+                </details>
             </div>
         </div>
     );

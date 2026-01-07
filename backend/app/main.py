@@ -1,37 +1,33 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+# Load Environment
 load_dotenv()
 
-from .api.router import api_router
-from .services import storage
+from .api.router import router
 
-app = FastAPI(
-    title="A.V.E.A – Automated Video Editing Agent",
-    version="0.1.0",
-)
+app = FastAPI(title="AVEA Backend (Reboot)")
 
-@app.on_event("startup")
-async def startup_event():
-    print("info:     Backend Starting...")
-    print("info:     Environment: PRODUCTION (Cloud Run)")
-    print("info:     Docs available at /docs")
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: tighten in production
+    allow_origins=["*"], # Allow all for MVP/Local
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api")
+# Mount Static for Output Videos
+os.makedirs("public/outputs", exist_ok=True)
+app.mount("/outputs", StaticFiles(directory="public/outputs"), name="outputs")
 
-# Serve media directory (input + output) as static files
-app.mount(
-    "/media",
-    StaticFiles(directory=storage.BASE_MEDIA_DIR),
-    name="media",
-)
+# Include Router
+app.include_router(router, prefix="/api")
+
+@app.get("/")
+def root():
+    return {"message": "AVEA AI Engine Online"}

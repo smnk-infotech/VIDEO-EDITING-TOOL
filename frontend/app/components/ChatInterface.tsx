@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles } from 'lucide-react';
+import { Send, Sparkles, Mic, MicOff } from 'lucide-react';
 
 interface Message {
     role: 'user' | 'ai';
@@ -27,7 +27,54 @@ export default function ChatInterface({ storyboard, onUpdateStoryboard }: ChatIn
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const recognitionRef = useRef<any>(null); // Use any for quick turn-around
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+            const SpeechRecognition = (window as any).webkitSpeechRecognition as any;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event: any) => {
+                const transcript = event.results[0][0].transcript;
+                setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+                setIsListening(false);
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech error", event.error);
+                setIsListening(false);
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            recognitionRef.current = recognition;
+        }
+    }, []);
+
+    const toggleListening = () => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+        } else {
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.start();
+                    setIsListening(true);
+                } catch (e) {
+                    console.error("Start error", e);
+                }
+            } else {
+                alert("Voice input not supported in this browser. Try Chrome.");
+            }
+        }
+    };
 
     // Initial greeting
     useEffect(() => {
@@ -133,19 +180,33 @@ export default function ChatInterface({ storyboard, onUpdateStoryboard }: ChatIn
             {/* Input */}
             <div className='p-3 bg-slate-900 border-t border-slate-800'>
                 <div className='flex gap-2 relative'>
+                    {/* Voice Button */}
+                    <button
+                        onClick={toggleListening}
+                        disabled={!storyboard || isThinking}
+                        className={`p-3 rounded-xl transition-all ${isListening
+                            ? 'bg-red-500/20 text-red-500 animate-pulse border border-red-500/50'
+                            : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                            }`}
+                        title="Click to Speak"
+                    >
+                        {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                    </button>
+
                     <input
                         type='text'
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder='Type edits here...'
+                        placeholder={isListening ? 'Listening...' : 'Type or speak edits...'}
                         disabled={!storyboard || isThinking}
-                        className='w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50'
+                        className='flex-1 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50'
                     />
                     <button
                         onClick={handleSend}
                         disabled={!storyboard || isThinking || !input.trim()}
                         className='absolute right-2 top-2 p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-0'
+                        style={{ right: '8px', top: '8px' }} // Explicit positioning override
                     >
                         <Send size={16} />
                     </button>

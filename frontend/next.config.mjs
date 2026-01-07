@@ -1,22 +1,14 @@
-/** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV !== 'production';
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: isDev ? undefined : 'export',
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-  rewrites: isDev ? async () => {
+  async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:8080/api/:path*',
+        destination: 'http://localhost:8080/api/:path*', // Proxy to Backend
       },
     ];
-  } : undefined,
+  },
 };
 
 export default nextConfig;

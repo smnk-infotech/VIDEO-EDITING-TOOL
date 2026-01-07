@@ -2,7 +2,11 @@ import google.generativeai as genai
 import os
 import json
 import time
+import logging
 from .config import settings
+
+# Setup logging
+logging.basicConfig(filename='gemini_debug.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
 gemini_client = None
 
@@ -10,13 +14,17 @@ class GeminiClient:
     def __init__(self):
         self.model = None
         if not settings.GOOGLE_API_KEY:
+            logging.warning("GOOGLE_API_KEY is missing.")
             print("Warning: GOOGLE_API_KEY is missing. AI features will be disabled.")
             return
         
         try:
             genai.configure(api_key=settings.GOOGLE_API_KEY)
-            self.model = genai.GenerativeModel("gemini-1.5-pro-latest")
+            # Switch to verified best model
+            self.model = genai.GenerativeModel("gemini-2.5-flash")
+            logging.info("Gemini initialized with gemini-2.5-flash")
         except Exception as e:
+            logging.error(f"Failed to initialize Gemini: {e}")
             print(f"Failed to initialize Gemini: {e}")
 
     async def analyze_video(self, video_path: str, prompt: str = "Analyze this video for viral potential."):

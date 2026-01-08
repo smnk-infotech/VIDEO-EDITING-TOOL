@@ -1,0 +1,75 @@
+{
+  "eb5aadea-0fe2-470b-a875-04622731f5e8": {
+    "id": "eb5aadea-0fe2-470b-a875-04622731f5e8",
+    "name": "Project_a6f3b21a",
+    "user_id": "anonymous",
+    "file_path": "temp_uploads\\a6f3b21a-31bd-4d3b-b4a1-f3f8c3e156bb_reels.mp4",
+    "status": "created",
+    "created_at": "1767800435.3021474"
+  },
+  "e24cb51b-6401-464c-bc5d-44b703838167": {
+    "id": "e24cb51b-6401-464c-bc5d-44b703838167",
+    "name": "Project_ba010b86",
+    "user_id": "anonymous",
+    "file_path": "temp_uploads\\ba010b86-3e99-41ed-867d-a9e98863e03d_reels.mp4",
+    "status": "created",
+    "created_at": "1767800448.643672"
+  },
+  "2f17ad1c-c274-499a-a720-12b4bbcf2ddf": {
+    "id": "2f17ad1c-c274-499a-a720-12b4bbcf2ddf",
+    "name": "Project_9c9049d5",
+    "user_id": "anonymous",
+    "file_path": "temp_uploads\\9c9049d5-c296-451c-b4ef-5184110eabb5_reels.mp4",
+    "status": "created",
+    "created_at": "1767800650.6533914"
+  },
+  "f7210ae9-2248-4ffa-a80a-7733f8b58bc6": {
+    "id": "f7210ae9-2248-4ffa-a80a-7733f8b58bc6",
+    "name": "Project_9345a108",
+    "user_id": "anonymous",
+    "file_path": "temp_uploads\\9345a108-c012-4112-8d59-563ad20a70e5_reels.mp4",
+    "status": "created",
+    "created_at": "1767802838.5251398",
+    "summary": "The strategy for this motivational video will leverage the speaker's direct address, enthusiastic delivery, and clear call to action to engage viewers interested in tech and AI education. Since there is no music or voiceover, the speaker's natural energy and gestures are paramount to maintaining viewer interest. The video will clearly outline the value proposition (AI apps, future courses, free resources) before leading into a strong invitation to join the speaker's journey and follow his content. Given the footage length of approximately 37 seconds, the video will be shorter than the 60-second target if only this footage is used, or would require creative use of hold frames or text overlays to reach the full duration.",
+    "scenes": [
+      {
+        "start": 0.0,
+        "end": 5.0,
+        "description": "Opening hook: Speaker begins speaking directly to the camera with a welcoming demeanor, gesturing with both hands, likely inviting viewers interested in tech/AI content."
+      },
+      {
+        "start": 5.0,
+        "end": 8.0,
+        "description": "Introduction: Speaker introduces himself by name, maintaining eye contact and a confident, approachable expression."
+      },
+      {
+        "start": 8.0,
+        "end": 13.0,
+        "description": "Content Overview: Speaker outlines what his page/content will cover (AI apps, future courses), using expressive hand gestures to emphasize points."
+      },
+      {
+        "start": 13.0,
+        "end": 19.0,
+        "description": "Key Benefits & Resources: Speaker becomes more animated, detailing the availability of free courses and helpful websites, demonstrating enthusiasm for knowledge sharing."
+      },
+      {
+        "start": 19.0,
+        "end": 25.0,
+        "description": "Call to Action - Join the Journey: Speaker transitions to a direct appeal, inviting viewers to 'join my travel' (journey), encouraging active participation."
+      },
+      {
+        "start": 25.0,
+        "end": 32.0,
+        "description": "Value Proposition - Skill & Knowledge Transfer: Speaker emphasizes his commitment to sharing his skills and knowledge, using a confident pointing gesture and a closed fist to convey determination."
+      },
+      {
+        "start": 32.0,
+        "end": 37.0,
+        "description": "Final Call to Action & Branding: Speaker points directly at the camera, explicitly asking viewers to 'follow' him, and concludes with a welcome to 'SMLK Infotech'."
+      }
+    ],
+    "projectId": "f7210ae9-2248-4ffa-a80a-7733f8b58bc6",
+    "job_id": "9345a108-c012-4112-8d59-563ad20a70e5",
+    "source_file": "temp_uploads\\9345a108-c012-4112-8d59-563ad20a70e5_reels.mp4"
+  }
+}

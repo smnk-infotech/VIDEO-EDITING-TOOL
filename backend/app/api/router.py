@@ -8,7 +8,8 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
-from ..services import project_manager, gemini_client, chat_service, renderer
+from ..services import project_manager, chat_service, renderer
+from ..core.gemini_client import gemini_client
 
 # --- Configuration ---
 # Setup logging to file
@@ -108,6 +109,8 @@ async def analyze_media(
         return result
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         logging.error(f"Analysis Failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Backend Error: {str(e)}")
 
